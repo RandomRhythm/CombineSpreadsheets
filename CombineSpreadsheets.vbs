@@ -158,7 +158,7 @@ end if
 
 'mark where match keys are located
 intRowCounter = 2
-Do Until objExcel2.Cells(intRowCounter,1).Value = "" 'loop till you hit null value (end of rows)
+Do Until objExcel2.Cells(intRowCounter,int_MainMatch_Location).Value = "" 'loop till you hit null value (end of rows)
 
 	strTmpMatchKey = objExcel2.Cells(intRowCounter,int_MainMatch_Location).Value
 	if boolCaseSensitive = False then strTmpMatchKey = lcase(strTmpMatchKey)
@@ -284,7 +284,7 @@ Function SelectFile( )
     ' Caveats:  Cannot define default starting folder.
     '           Uses last folder used with MSHTA.EXE stored in Binary in [HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32].
     '           Dialog title says "Choose file to upload".
-    ' Source:   http://social.technet.microsoft.com/Forums/scriptcenter/en-US/a3b358e8-15&ælig;-4ba3-bca5-ec349df65ef6
+    ' Source:   http://social.technet.microsoft.com/Forums/scriptcenter/en-US/a3b358e8-15&?lig;-4ba3-bca5-ec349df65ef6
 
     Dim objExec, strMSHTA, wshShell
 
@@ -462,6 +462,5 @@ next
 
 ReturnListfromDict = strTmpDictList
 End Function
-
 
 
