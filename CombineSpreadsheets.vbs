@@ -2,8 +2,7 @@
 'Requires Microsoft Excel. If blank entries exist in matching columns then sort by that column so empty entries are last.
 'may take a while for large spreadsheets. Haven't looked into optimization but fastest option would be to not use Excel.
 
-'Copyright (c) 2017 Ryan Boyle randomrhythm@rhythmengineering.com.
-'All rights reserved.
+'Copyright (c) 2018 Ryan Boyle randomrhythm@rhythmengineering.com.
 
 'This program is free software: you can redistribute it and/or modify
 'it under the terms of the GNU General Public License as published by
@@ -119,7 +118,7 @@ end if
 mycolumncounter = 1
 int_Main_Location = -1
 Do Until objExcel.Cells(1,mycolumncounter).Value = ""
-  if objExcel.Cells(1,mycolumncounter).Value = strMainSSKey then int_Main_Location = mycolumncounter 'Match key
+  if cStr(objExcel.Cells(1,mycolumncounter).Value) = cStr(strMainSSKey) then int_Main_Location = mycolumncounter 'Match key
   mycolumncounter = mycolumncounter +1
 loop
 intLastRowEntry = mycolumncounter
