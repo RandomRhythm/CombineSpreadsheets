@@ -25,11 +25,13 @@ Dim strMainSSKey
 Dim intLastRowEntry
 Dim intLastImportRow
 Dim boolCaseSensitive
+Dim boolShowSecondExcel
 
 'config section
 strMainSSKey = ""
 strMainMatchKey = ""
 boolCaseSensitive = False
+boolShowSecondExcel = True 'Set to true to show second Excel window (be sure not to close it out until script has finished)
 'end config section
 
 Set WshShell = CreateObject("WScript.Shell")
@@ -134,13 +136,16 @@ end if
 if objFSO.fileexists(OpenFilePath2) = False then
 	wscript.echo "file does not exist:" & OpenFilePath2 & ". The script will now exit."
 	wscript.quit(6)
-elseif strMainMatchKey = "" then
-	strMainMatchKey = inputbox("Please type the exact text for the column header name you want to use for combining the recently selected spreadsheet")
 end if
+
 Set objExcel2 = CreateObject("Excel.Application")
 Set objWorkbook2 = objExcel2.Workbooks.Open _
     (OpenFilePath2)
-    objExcel2.Visible = False 'Hide this to not confuse or allow accidental closure
+    objExcel2.Visible = boolShowSecondExcel 'Hide this to not confuse or allow accidental closure
+
+if strMainMatchKey = "" then
+	strMainMatchKey = inputbox("Please type the exact text for the column header name you want to use for combining the recently selected spreadsheet")
+end if
 secondcolumncounter = 1
 int_MainMatch_Location = -1
 Do Until objExcel2.Cells(1,secondcolumncounter).Value = ""
