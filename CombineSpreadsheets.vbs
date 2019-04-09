@@ -82,7 +82,7 @@ intWriteRowCounter = 1
 CurrentDirectory = GetFilePath(wscript.ScriptFullName)
 
 
-strDebugPath = CurrentDirectory & "\Debug"
+
 if OpenFilePath1 = "" or objFSO.fileexists(OpenFilePath1) = False then
 	if OpenFilePath1 <> "" and objFSO.fileexists(OpenFilePath1) = False then
 		wscript.echo "file does not exist:" & OpenFilePath1 & ". Please open the main spreadsheet"
@@ -92,12 +92,6 @@ if OpenFilePath1 = "" or objFSO.fileexists(OpenFilePath1) = False then
 	OpenFilePath1 = SelectFile( )
 end if
 
-
-
-
-'create sub directories 
-if objFSO.folderexists(strDebugPath) = False then _
-objFSO.createfolder(strDebugPath)
 
 
 
