@@ -2,7 +2,7 @@
 'Requires Microsoft Excel. If blank entries exist in matching columns then sort by that column so empty entries are last.
 'may take a while for large spreadsheets. Haven't looked into optimization but fastest option would be to not use Excel.
 
-'Copyright (c) 2018 Ryan Boyle randomrhythm@rhythmengineering.com.
+'Copyright (c) 2020 Ryan Boyle randomrhythm@rhythmengineering.com.
 
 'This program is free software: you can redistribute it and/or modify
 'it under the terms of the GNU General Public License as published by
@@ -26,12 +26,17 @@ Dim intLastRowEntry
 Dim intLastImportRow
 Dim boolCaseSensitive
 Dim boolShowSecondExcel
+Dim boolMatchPartial
+Dim strUniqueSplit
 
 'config section
 strMainSSKey = ""
 strMainMatchKey = ""
 boolCaseSensitive = False
 boolShowSecondExcel = True 'Set to true to show second Excel window (be sure not to close it out until script has finished)
+boolMatchPartial = True 'Perform partial cell match using strUniqueSplit
+strUniqueSplit = "" 'character to split cell value up for partial match to ensure unique match. Use "" to disable. Example: If the following is a cell value then set  "|" to get a match for any IP "10.10.10.9|10.10.10.10"
+
 'end config section
 
 Set WshShell = CreateObject("WScript.Shell")
@@ -160,6 +165,14 @@ Do Until objExcel2.Cells(intRowCounter,int_MainMatch_Location).Value = "" 'loop 
 
 	strTmpMatchKey = objExcel2.Cells(intRowCounter,int_MainMatch_Location).Value
 	if boolCaseSensitive = False then strTmpMatchKey = lcase(strTmpMatchKey)
+  if boolMatchPartial = True then 'Perform partial cell match 
+      if strUniqueSplit <> "" and instr(strTmpMatchKey, strUniqueSplit)  > 0 Then
+        arrayCellValues = split(strTmpMatchKey, strUniqueSplit)
+        for each cellVaule in arrayCellValues
+          if DictKeyLocation.exists(cellVaule) = false then DictKeyLocation.add cellVaule, intRowCounter
+        next
+      end if
+  end if
 	if DictKeyLocation.exists(strTmpMatchKey) = false then DictKeyLocation.add strTmpMatchKey, intRowCounter
 	intRowCounter = intRowCounter + 1
 loop
@@ -186,7 +199,23 @@ Do Until objExcel.Cells(intRowCounter,int_Main_Location).Value = "" 'loop till y
     'msgbox DictKeyLocation.item(strTmpMatchKey)
     for secondcolumncounter =1 to intLastImportRow
       strSStempValue = objExcel2.Cells(DictKeyLocation.item(strTmpMatchKey),secondcolumncounter).Value
+      on error resume next
        objExcel.Cells(intRowCounter,inttmpLastRowEntry).Value = strSStempValue
+       if err.number <> 0 then 
+          if left(strSStempValue,1) = "=" then 
+            ExcelObj.Cells(intRowCounter,inttmpLastRowEntry).NumberFormat = "@" 'fix problem where Excel thinks we are creating a formula
+            objExcel.Cells(intRowCounter,inttmpLastRowEntry).Value = strSStempValue
+          else
+            msgbox err.message & vbcrlf & "There was an error on row " & intRowCounter & " setting the value for column " & inttmpLastRowEntry & " to " & strSStempValue
+            StrQuestion = msgbox("Error writing to spreadsheet. This can happen if you accessed cell contents. Click out of any cell and choose yes. To quit choose no.",4,"Question")
+            if StrQuestion = 7 then'no
+              wscript.quit(589)
+            elseif StrQuestion <> 6 then  
+              msgbox "invalid response"
+            end if
+          end if
+        end if
+      on error goto 0 
       inttmpLastRowEntry = inttmpLastRowEntry +1
     next
   else
