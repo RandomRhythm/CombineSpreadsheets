@@ -2,7 +2,7 @@
 'Requires Microsoft Excel. If blank entries exist in matching columns then sort by that column so empty entries are last.
 'may take a while for large spreadsheets. Haven't looked into optimization but fastest option would be to not use Excel.
 
-'Copyright (c) 2020 Ryan Boyle randomrhythm@rhythmengineering.com.
+'Copyright (c) 2021 Ryan Boyle randomrhythm@rhythmengineering.com.
 
 'This program is free software: you can redistribute it and/or modify
 'it under the terms of the GNU General Public License as published by
@@ -35,8 +35,8 @@ strMainMatchKey = ""
 boolCaseSensitive = False
 boolShowSecondExcel = True 'Set to true to show second Excel window (be sure not to close it out until script has finished)
 boolMatchPartial = True 'Perform partial cell match using strUniqueSplit
-strUniqueSplit = "" 'character to split cell value up for partial match to ensure unique match. Use "" to disable. Example: If the following is a cell value then set  "|" to get a match for any IP "10.10.10.9|10.10.10.10"
-
+strUniqueSplit = "" 'character to split cell value up for partial match to ensure unique match. Use "" to disable. Example: If the following is a cell value then set strUniqueSplit = "|" to get a match for any IP "10.10.10.9|10.10.10.10"
+boolSplitList = False 'Set to True to split by each character in strUniqueSplit. Set to False to split off the entire strUniqueSplit string. True Example: If the following is a cell value then set strUniqueSplit = "|," to get a match for any IP or MAC address "10.10.10.9,4e4cd7965c0b|10.10.10.10,4e4cd7965c0c"
 'end config section
 
 Set WshShell = CreateObject("WScript.Shell")
@@ -166,10 +166,17 @@ Do Until objExcel2.Cells(intRowCounter,int_MainMatch_Location).Value = "" 'loop 
 	strTmpMatchKey = objExcel2.Cells(intRowCounter,int_MainMatch_Location).Value
 	if boolCaseSensitive = False then strTmpMatchKey = lcase(strTmpMatchKey)
   if boolMatchPartial = True then 'Perform partial cell match 
-      if strUniqueSplit <> "" and instr(strTmpMatchKey, strUniqueSplit)  > 0 Then
-        arrayCellValues = split(strTmpMatchKey, strUniqueSplit)
+      if strUniqueSplit <> "" and (instr(strTmpMatchKey, strUniqueSplit)  > 0 Or boolSplitList = True) Then
+        if boolSplitList = True then
+          arrayCellValues = recursiveSplit(strTmpMatchKey, strUniqueSplit) 'always returns an array. If no split char match then whole string is added to a one item array
+        else
+          arrayCellValues = split(strTmpMatchKey, strUniqueSplit)
+        end if
+        
         for each cellVaule in arrayCellValues
-          if DictKeyLocation.exists(cellVaule) = false then DictKeyLocation.add cellVaule, intRowCounter
+          If cellVaule <> "" Then
+          	If DictKeyLocation.exists(cellVaule) = false then DictKeyLocation.add cellVaule, intRowCounter
+          End If
         next
       end if
   end if
@@ -491,3 +498,68 @@ ReturnListfromDict = strTmpDictList
 End Function
 
 
+'------------------Recursive Split---------------------------'
+Function splitRecursiveBuilder(strTargetArray, strBuildArray)
+  arraylen = ubound(strTargetArray) + ubound(strBuildArray) +2
+  ReDim preserve returnArray(arraylen)
+  arrayRecurseCount = 0
+  for Each targetItem in strTargetArray
+    returnArray(arrayRecurseCount) = targetItem
+    arrayRecurseCount = arrayRecurseCount +1
+  next
+  for Each targetItem in strBuildArray
+    returnArray(arrayRecurseCount) = targetItem
+    arrayRecurseCount = arrayRecurseCount +1
+  next
+  splitRecursiveBuilder = returnArray
+end function
+
+Function recursiveArraySplitter(arrayToSplit, splitCharacter)
+arrayToReturn = ""
+	For Each strItemToSplit In  arrayToSplit
+	if  instr(strItemToSplit, splitCharacter)  > 0 Then
+		if Not IsArray(arrayToReturn) then
+		        arrayToReturn = split(arrayToSplit, splitCharacter)
+	    Else    
+			tmpReturnArray = split(strItemToSplit, splitCharacter)
+			arrayToReturn = splitRecursiveBuilder(tmpReturnArray, arrayToReturn)
+	    end if
+	Else
+		ReDim tmpZeroArray(0): tmpZeroArray(0) = strItemToSplit
+		If Not IsArray(arrayToReturn) Then
+			arrayToReturn = tmpZeroArray
+		Else
+			arrayToReturn = splitRecursiveBuilder(tmpZeroArray, arrayToReturn)
+		End if	
+	End If
+	next
+recursiveArraySplitter = arrayToReturn
+End Function
+	      
+
+Function recursiveSplit(strTargetString, strSplitChars)
+  arrayRecurse = ""
+  If strSplitChars <> "" Then
+  	  
+	  for charCount = 1 to len(strSplitChars)
+	    
+	    strUniqueSplitChar = mid(strSplitChars,charCount,1)
+	      if  instr(strTargetString, strUniqueSplitChar)  > 0 Then
+	          if Not IsArray(arrayRecurse) then
+
+	        arrayRecurse = split(strTargetString, strUniqueSplitChar)
+	        Else
+	        	arrayRecurse = recursiveArraySplitter(arrayRecurse, strUniqueSplitChar) 'split string in array and return new array
+	        End if
+end if
+	  Next
+  End if
+  if Not IsArray(arrayRecurse) then
+    dim tmpRecArray(0): tmpRecArray(0) = strTargetString
+    recursiveSplit = tmpRecArray
+  else
+    recursiveSplit = arrayRecurse
+  end if
+
+end function
+'------------------End Recursive Split---------------------------'
